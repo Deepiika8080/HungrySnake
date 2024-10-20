@@ -1,101 +1,209 @@
-import Image from "next/image";
+"use client"
+import "../css/style.css";
+import { useEffect, useRef } from "react";
+import IsCollide from "./components/IsCollide";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const inputDir = useRef({ x: 0, y: 0 });
+  const scoreRef = useRef<HTMLDivElement | null>(null);
+  const highScoreRef = useRef<HTMLDivElement | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const foodSound: HTMLAudioElement | undefined = new Audio("/music/food.mp3");
+  const gameOverSound: HTMLAudioElement | undefined = new Audio("/music/game-over.mp3");
+  const gamemusic: HTMLAudioElement | undefined = new Audio("/music/music.mp3");
+  const movesound: HTMLAudioElement | undefined = new Audio("/music/move.mp3");
+
+  const speed = 7;
+  let lastPaintTime = 0;
+  let snakeArr = [
+    { x: 13, y: 15 }
+  ]
+  let food = { x: 6, y: 12 };
+  let score = 0;
+  const highScore = localStorage.getItem("hiscore");
+  console.log("highScore", highScore);
+  let highScoreValue = highScore ? parseInt(highScore, 10) : 0;
+  console.log("hhighScoreValueighScore", highScoreValue);
+  
+  // function isCollide(sarr: { x: number; y: number }[]) {
+  //   for (let i = 1; i < snakeArr.length; i++) {
+  //     if (sarr[i].x === sarr[0].x && sarr[i].y === sarr[0].y) {
+  //       return true;
+  //     }
+
+  //   }
+  //   if (sarr[0].x >= 18 || sarr[0].x <= 0 || sarr[0].y >= 18 || sarr[0].y <= 0) {
+  //     return true;
+  //   }
+  // }
+ <IsCollide snakeArr={snakeArr}/>
+  function gameEngine() {
+    // updating snake and food 
+
+    if (IsCollide(snakeArr)) {
+      gameOverSound?.play();
+      gamemusic?.pause();
+
+      if (highScoreValue) {
+        if (highScoreValue < score) {
+          highScoreValue = score;
+          console.log("highScoreValue", highScoreValue);
+          console.log("score", score);
+          if (highScoreRef.current) {
+            highScoreRef.current.innerHTML = "High Score : " + highScoreValue;//highScore
+          }
+        }
+      }
+
+
+      inputDir.current = { x: 0, y: 0 };
+      food = { x: 6, y: 12 };
+      score = 0;
+      if (scoreRef.current) {
+        scoreRef.current.innerHTML = "score : " + score;
+      }
+
+      alert("Game over! Press any key to restart.");
+      snakeArr = [{ x: 13, y: 15 }]
+      gamemusic?.play();
+
+    }
+
+    // if snake eaten the food you need to add new food
+    if (snakeArr[0].y === food.y && snakeArr[0].x === food.x) {
+      foodSound?.play();
+      score += 1;
+      // if( scoreRef.current) {
+      //   if( scoreRef.current > highScore) {
+      //     highScore = scoreRef.current;
+      //     localStorage.setItem("hiscore",JSON.stringify(highScore));
+      //   }
+      // }
+      if (score > highScoreValue) {
+        highScoreValue = score;
+        localStorage.setItem("hiscore", JSON.stringify(highScoreValue));
+      }
+      if (scoreRef.current) {
+        scoreRef.current.innerHTML = "score : " + score;
+      }
+
+      snakeArr.unshift({ x: snakeArr[0].x + inputDir.current.x, y: snakeArr[0].y + inputDir.current.y })
+      const a = 0, b = 18;
+      food = { x: Math.round(a + (b - a) * Math.random()), y: Math.round(a + (b - a) * Math.random()) }
+    }
+    // Moving the sanke 
+    for (let i = snakeArr.length - 2; i >= 0; i--) {
+      snakeArr[i + 1] = { ...snakeArr[i] };
+
+    }
+    snakeArr[0].x += inputDir.current.x;
+    snakeArr[0].y += inputDir.current.y;
+    // displays snake and food
+    // displays snake
+    if (boardRef.current) {
+      boardRef.current.innerHTML = "";
+    }
+    snakeArr.forEach((e, index) => {
+      const snakeElement = document.createElement('div');
+      snakeElement.style.gridRowStart = e.y.toString();
+      snakeElement.style.gridColumnStart = e.x.toString();
+
+      if (index === 0) {
+        snakeElement.classList.add('head');
+      } else {
+        snakeElement.classList.add('snake');
+      }
+
+      boardRef.current?.appendChild(snakeElement);
+
+    })
+    // displays food
+
+    const foodElement = document.createElement('div');
+    foodElement.style.gridRowStart = food.y.toString();
+    foodElement.style.gridColumnStart = food.x.toString();
+    foodElement.classList.add('food');
+    boardRef.current?.appendChild(foodElement);
+  }
+
+  function main(ctime: number) {
+
+    window.requestAnimationFrame(main);
+    // console.log(ctime);
+    if ((ctime - lastPaintTime) / 1000 < 1 / speed) {
+      return;
+    }
+    lastPaintTime = ctime;
+
+    gameEngine();
+  }
+
+  
+ 
+  useEffect(
+    () => {
+      if (highScoreValue === null) {
+        const highScoreval = 0;
+        localStorage.setItem("hiscore", JSON.stringify(highScoreval));
+      } else {
+        console.log("highScoreRef", highScoreRef.current);
+        if (highScoreRef.current !== null) {
+          console.log("inner highscore", highScoreValue);
+          highScoreRef.current.innerHTML = "High Score : " + highScoreValue;
+        }    
+      }
+    }, []
+  )
+  useEffect(() => {
+
+    window.requestAnimationFrame(main);
+    // Main logic
+    window.addEventListener('keydown', (e: KeyboardEvent) => {
+      gamemusic.play();
+      inputDir.current = { x: 0, y: 1 }
+      movesound.play();
+
+      switch (e.key) {
+        case "ArrowUp":
+          inputDir.current.y = -1;
+          inputDir.current.x = 0;
+          // console.log("ArrowUP");
+          break;
+
+        case "ArrowDown":
+          inputDir.current.y = 1;
+          inputDir.current.x = 0;
+          // console.log("ArrowDOWN");
+          break;
+
+        case "ArrowLeft":
+          inputDir.current.y = 0;
+          inputDir.current.x = -1;
+          // console.log("ArrowLEFT");
+          break;
+
+        case "ArrowRight":
+          inputDir.current.y = 0;
+          inputDir.current.x = 1;
+          // console.log("ArrowRIGHT");
+          break;
+
+        default:
+          break;
+      }
+    });
+  }, [gamemusic  , movesound]);
+  // Game logic
+
+  // Game functions 
+
+  return (
+    <div>
+      <div className="board " ref={boardRef}></div>
+      <div id="score" ref={scoreRef}>score:0</div>
+      <div id="highscore" ref={highScoreRef}> HighScore:0</div>
     </div>
   );
 }
+
